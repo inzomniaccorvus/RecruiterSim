@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import multer from "multer";
 import { PDFParse } from "pdf-parse";
-import prisma from "./prisma";
+import prisma from "./prisma.js";
 import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -25,7 +25,7 @@ app.post("/submit", upload.single("resume"), async (req, res) => {
     await parser.destroy();
     const resumeText = result.text;
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i;
-    const email = resumeText.match(emailRegex);
+    const email = resumeText.match(emailRegex)[0];
     if (email === null) {
       return res.status(400).json({ error: "No email found in resume" });
     }
@@ -57,7 +57,22 @@ app.post("/submit", upload.single("resume"), async (req, res) => {
   }
 });
 
-app.get("/history", (req, res) => {});
+app.get("/history", async (req, res) => {
+  try {
+    const email = req.query.email;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user === null) {
+      return res.status(404).json({ error: "entry missing." });
+    }
+    const submissions = await prisma.submission.findMany({
+      where: { userID: user.id },
+    });
+    res.json(submissions);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: "Something went wrong." });
+  }
+});
 
 app.listen(3000, () => {
   console.log(`listening on port ${port}`);
