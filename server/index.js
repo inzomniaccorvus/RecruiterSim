@@ -51,7 +51,7 @@ app.post("/submit", upload.single("resume"), async (req, res) => {
         userID: user.id,
       },
     });
-    res.json(submission);
+    res.json({ ...submission, email: user.email });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Something went wrong." });
@@ -61,11 +61,14 @@ app.post("/submit", upload.single("resume"), async (req, res) => {
 app.get("/submission/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const submission = await prisma.submission.findUnique({ where: { id } });
+    const submission = await prisma.submission.findUnique({
+      where: { id },
+      include: { user: true },
+    });
     if (submission === null) {
       return res.status(404).json({ error: "entry missing." });
     }
-    res.json(submission);
+    res.json({ ...submission, email: submission.user.email });
   } catch (error) {
     return res.status(500).json({ error: "Something went wrong." });
   }
