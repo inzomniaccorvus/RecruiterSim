@@ -23,15 +23,19 @@ function Home() {
     });
     setLoading(false);
     const data = await respone.json();
-    navigate("/result", {
-      state: { data },
-    });
+    navigate(`/result/${data.id}`);
   };
 
   return (
     <>
+      <h1>Recruiter Simulator</h1>
+      <h2>Get honest and constructive feedback with a touch of humor</h2>
+      <p>
+        Usage: Upload your resume, drop in the role and salary you're gunning
+        for, and let our AI recruiter tell you exactly where you stand
+      </p>
       <form onSubmit={(e) => handleSubmit(e)}>
-        <label htmlFor="resume">Resume</label>
+        <label htmlFor="resume">Resume(PDF) : </label>
         <input
           type="file"
           name="resume"
@@ -40,7 +44,7 @@ function Home() {
             setResume(e.target.files[0]);
           }}
         />
-        <label htmlFor="jobTitle">Job Title</label>
+        <label htmlFor="jobTitle">Target Role : </label>
         <input
           type="text"
           name="jobTittle"
@@ -49,9 +53,7 @@ function Home() {
             setJobTitle(e.target.value);
           }}
         />
-        <label htmlFor="salaryExpectation">
-          Salary Expectation(Yearly, USD)
-        </label>
+        <label htmlFor="salaryExpectation">Expected Salary (USD/year) : </label>
         <input
           type="text"
           name="salaryExpectation"
@@ -59,9 +61,14 @@ function Home() {
           onChange={(e) => setSalaryExpectation(e.target.value)}
         />
         <button type="submit" disabled={loading}>
-          {loading ? "Submitting..." : "Submit"}
+          {loading ? "Roasting..." : "Roast Me"}
         </button>
       </form>
+      <p>
+        <small>
+          Your submissions are saved - look them up anytime under History
+        </small>
+      </p>
     </>
   );
 }

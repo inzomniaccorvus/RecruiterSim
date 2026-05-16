@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 function History() {
   const [email, setEmail] = useState("");
@@ -46,13 +47,14 @@ function History() {
       </form>
       {results &&
         results.map((submission) => (
-          <div key={submission.id}>
-            <p>Email : {submittedEmail}</p>
-            <p>Job Title : {submission.jobTitle}</p>
-            <p>Salary Expectation : {submission.salaryExpectation}</p>
-            <p>Summary: {submission.summary}</p>
-            <p>Feedback: {submission.feedback}</p>
-          </div>
+          <Link key={submission.id} to={`/result/${submission.id}`}>
+            <div>
+              <p>Email : {submittedEmail}</p>
+              <p>Job Title : {submission.jobTitle}</p>
+              <p>Salary Expectation : {submission.salaryExpectation}</p>
+              <p>Data : {new Date(submission.date).toLocaleDateString()}</p>
+            </div>
+          </Link>
         ))}
 
       {searched && !loading && results === null && (

@@ -1,15 +1,28 @@
-import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 function Result() {
-  const location = useLocation();
-  const { data } = location.state;
+  const { id } = useParams();
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch(`http://localhost:3000/submission/${id}`);
+      if (!response.ok) {
+        setData(null);
+        return;
+      }
+      const submissionData = await response.json();
+      setData(submissionData);
+    };
+    fetchData();
+  }, [id]);
   return (
     <>
       <h1>
         Here's a summary of your submission and arguably constructive feedback -
       </h1>
-      <p>{data.summary}</p>
-      <p>{data.feedback}</p>
+      <p>{data && data.summary}</p>
+      <p>{data && data.feedback}</p>
     </>
   );
 }

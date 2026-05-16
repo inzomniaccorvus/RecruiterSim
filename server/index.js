@@ -38,7 +38,7 @@ app.post("/submit", upload.single("resume"), async (req, res) => {
     const salaryExpectation = req.body.salaryExpectation;
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
-      contents: `Pretend you're a recruiter for a certain company, someone's applying for ${jobTitle} position, expects a salaryExpectation of ${salaryExpectation} USD yearly and their details are ${resumeText} in resume form. Give summary of their submission and then constructive feedback. Respond in pure JSON only, no markdown, no backticks, with exactly these keys: {"summary": "...", "feedback": "..."}. Use witty humor and don't forget to roast or praise them when necessary.`,
+      contents: `Pretend you're a recruiter for a certain company, someone's applying for ${jobTitle} position, expects a salaryExpectation of ${salaryExpectation} USD yearly and their details are ${resumeText} in resume form. Give summary of their submission and then constructive feedback. Respond in pure JSON only, no markdown, no backticks, with exactly these keys: {"summary": "...", "feedback": "..."}. Do not use markdown formatting in your response text. Use witty humor and don't forget to roast or praise them when necessary.`,
     });
     const responseText = response.text;
     const { summary, feedback } = JSON.parse(responseText);
@@ -54,6 +54,19 @@ app.post("/submit", upload.single("resume"), async (req, res) => {
     res.json(submission);
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ error: "Something went wrong." });
+  }
+});
+
+app.get("/submission/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const submission = await prisma.submission.findUnique({ where: { id } });
+    if (submission === null) {
+      return res.status(404).json({ error: "entry missing." });
+    }
+    res.json(submission);
+  } catch (error) {
     return res.status(500).json({ error: "Something went wrong." });
   }
 });
