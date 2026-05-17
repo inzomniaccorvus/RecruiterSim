@@ -1,13 +1,18 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 function History() {
   const [email, setEmail] = useState("");
-  const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState("");
-  const navigate = useNavigate();
+
+  const [results, setResults] = useState(() => {
+    const saved = sessionStorage.getItem("historyResults");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [submittedEmail, setSubmittedEmail] = useState(() => {
+    return sessionStorage.getItem("historyEmail") || "";
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +30,8 @@ function History() {
     }
     const data = await response.json();
     setResults(data);
+    sessionStorage.setItem("historyResults", JSON.stringify(data));
+    sessionStorage.setItem("historyEmail", email);
   };
 
   return (
@@ -63,38 +70,43 @@ function History() {
         <table className="w-full mt-8 border-collapse">
           <thead>
             <tr>
-              <th className="text-left text-gray-400 text-sm pb-3 border-b border-gray-700">
+              <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700">
                 Email
               </th>
-              <th className="text-left text-gray-400 text-sm pb-3 border-b border-gray-700">
+              <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700">
                 Job Title
               </th>
-              <th className="text-left text-gray-400 text-sm pb-3 border-b border-gray-700">
+              <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700">
                 Salary
               </th>
-              <th className="text-left text-gray-400 text-sm pb-3 border-b border-gray-700">
+              <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700">
                 Date
               </th>
+              <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700"></th>
             </tr>
           </thead>
           <tbody>
             {results.map((submission) => (
-              <tr
-                key={submission.id}
-                onClick={() => navigate(`/result/${submission.id}`)}
-                className="cursor-pointer hover:bg-gray-700"
-              >
-                <td className="py-3 border-b border-gray-800 text-gray-300">
+              <tr key={submission.id} className="hover:bg-gray-700">
+                <td className="py-3 px-2 border-b border-gray-800 text-gray-300">
                   {submittedEmail}
                 </td>
-                <td className="py-3 border-b border-gray-800 text-gray-300">
+                <td className="py-3 px-2 border-b border-gray-800 text-gray-300">
                   {submission.jobTitle}
                 </td>
-                <td className="py-3 border-b border-gray-800 text-gray-300">
+                <td className="py-3 px-2 border-b border-gray-800 text-gray-300">
                   {submission.salaryExpectation}
                 </td>
-                <td className="py-3 border-b border-gray-800 text-gray-300">
+                <td className="py-3 px-2 border-b border-gray-800 text-gray-300">
                   {new Date(submission.date).toLocaleDateString()}
+                </td>
+                <td className=" py-3 px-2 border-b border-gray-800">
+                  <a
+                    href={`/result/${submission.id}`}
+                    className="text-blue-400 hover:underline"
+                  >
+                    View
+                  </a>
                 </td>
               </tr>
             ))}
@@ -103,8 +115,9 @@ function History() {
       )}
       {searched && !loading && results === null && (
         <>
-          <p className="py-3 border-b border-gray-800 text-gray-300">
-            No submissions found for {submittedEmail}.
+          <p className="text-gray-400 mt-8">
+            No submissions found for{" "}
+            <span className="text-white">{submittedEmail}</span>.
           </p>
         </>
       )}
