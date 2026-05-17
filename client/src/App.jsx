@@ -4,6 +4,7 @@ import Result from "./pages/Result";
 import History from "./pages/History";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Auth from "./pages/Auth";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/result/:id" element={<Result />} />
           <Route path="/history" element={<History />} />
+          <Route path="/auth" element={<Auth />} />
         </Routes>
       </main>
       <Footer />

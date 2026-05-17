@@ -8,7 +8,6 @@ import { GoogleGenAI } from "@google/genai";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { error } from "console";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -30,7 +29,12 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use(authenticate);
@@ -129,6 +133,10 @@ app.post("/register", async (req, res) => {
     });
     res.json({ message: "Registered successfully" });
   } catch (error) {
+    if (error.code === "P2002") {
+      return res.status(409).json({ error: "Email already registered." });
+    }
+    console.log(error);
     return res.status(500).json({ error: "Something went wrong." });
   }
 });
@@ -169,6 +177,11 @@ app.post("/logout", (req, res) => {
   res.json({
     message: "Logged out successfully.",
   });
+});
+
+app.get("/me", (req, res) => {
+  if (!req.user) return res.status(401).json({ error: "Unauthorized." });
+  res.json({ userId: req.user.userId });
 });
 
 app.listen(3000, () => {
