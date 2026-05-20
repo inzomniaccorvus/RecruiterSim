@@ -179,9 +179,10 @@ app.post("/logout", (req, res) => {
   });
 });
 
-app.get("/me", (req, res) => {
+app.get("/me", async (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Unauthorized." });
-  res.json({ userId: req.user.userId });
+  const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+  res.json({ userId: user.id, email: user.email });
 });
 
 app.listen(3000, () => {

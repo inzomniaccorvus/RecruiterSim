@@ -6,7 +6,7 @@ function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { isLoggedIn, setIsLoggedIn } = useAuth();
+  const { setCurrentEmail, setIsLoggedIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -42,6 +42,7 @@ function Auth() {
       return;
     }
     setIsLoggedIn(true);
+    setCurrentEmail(email);
     navigate("/");
   };
 

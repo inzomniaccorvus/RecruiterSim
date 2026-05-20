@@ -4,6 +4,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentEmail, setCurrentEmail] = useState("");
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -12,6 +13,8 @@ export function AuthProvider({ children }) {
         });
         if (response.ok) {
           setIsLoggedIn(true);
+          const parsed = await response.json();
+          setCurrentEmail(parsed.email);
         }
       } catch {
         setIsLoggedIn(false);
@@ -20,7 +23,9 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, []);
   return (
-    <AuthContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
+    <AuthContext.Provider
+      value={{ isLoggedIn, setIsLoggedIn, currentEmail, setCurrentEmail }}
+    >
       {children}
     </AuthContext.Provider>
   );

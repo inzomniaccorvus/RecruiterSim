@@ -17,7 +17,6 @@ function History() {
       setLoading(false);
       if (!response.ok) {
         setResults(null);
-        //do i need throw catch instead
         return;
       }
       const result = await response.json();
@@ -29,7 +28,7 @@ function History() {
   if (!isLoggedIn) {
     return (
       <>
-        <h1 className="text-3xl font-bold mb-2">You're not lot logged in.</h1>
+        <h1 className="text-3xl font-bold mb-2">You're not not logged in.</h1>
         <p className="text-gray-400 mt-8 mb-8">
           Log in to see your submissions.
         </p>
