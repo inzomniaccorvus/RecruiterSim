@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 
 function Result() {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -12,6 +14,7 @@ function Result() {
       setLoading(false);
       if (!response.ok) {
         setData(null);
+        setError("Submission not found.");
         return;
       }
       const submissionData = await response.json();
@@ -19,6 +22,21 @@ function Result() {
     };
     fetchData();
   }, [id]);
+
+  if (error) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold mb-8">Submission not found.</h1>
+        <Link
+          to="/"
+          className="bg-blue-700 hover:bg-blue-900 text-white font-bold px-6 py-2 rounded-lg transition-colors w-full mt-2"
+        >
+          Go Home
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl w-full mx-auto">
       <h1 className="text-3xl font-bold mb-6">Recruiter's Verdict</h1>
@@ -43,8 +61,7 @@ function Result() {
             </p>
           </div>
           <small className="text-gray-500 text-sm mt-6">
-            This submission is saved and can be found under History using{" "}
-            {data && data.email}.
+            This submission is saved and can be found under History.
           </small>
         </div>
       )}

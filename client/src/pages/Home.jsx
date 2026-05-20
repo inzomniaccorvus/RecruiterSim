@@ -20,6 +20,7 @@ function Home() {
     const respone = await fetch("http://localhost:3000/submit", {
       method: "POST",
       body: formData,
+      credentials: "include",
     });
     setLoading(false);
     const data = await respone.json();
@@ -98,7 +99,8 @@ function Home() {
       </form>
       <p>
         <small>
-          Your submissions are saved - look them up anytime under History
+          Your submissions are saved if logged in - look them up anytime under
+          History
         </small>
       </p>
     </>

@@ -47,27 +47,43 @@ function Auth() {
 
   return (
     <>
-      <button onClick={toggleHandler}>
+      <button
+        className="bg-indigo-700 hover:bg-indigo-900 text-white font-bold px-6 py-2 rounded-lg transition-colors my-8"
+        onClick={toggleHandler}
+      >
         {isLogin ? "Switch to Register" : "Switch to Login"}
       </button>
       <form onSubmit={submitHandler}>
-        <label htmlFor="email">Email</label>
+        <label className="text-base text-gray-400 font-medium" htmlFor="email">
+          Email
+        </label>
         <input
           type="email"
           name="email"
           id="0"
           value={email}
+          className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 mt-2 mb-4 text-white w-full focus:outline-none focus:border-blue-500"
           onChange={handleEmailChange}
         />
-        <label htmlFor="password">Password</label>
+        <label
+          className="text-base text-gray-400 font-medium"
+          htmlFor="password"
+        >
+          Password
+        </label>
         <input
           type="password"
           name="password"
           id="1"
           value={password}
+          className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 mt-2 mb-4 text-white w-full focus:outline-none focus:border-blue-500"
           onChange={handlePasswordChange}
         />
-        <button type="submit" disabled={loading}>
+        <button
+          type="submit"
+          className="bg-blue-700 hover:bg-blue-900 text-white font-bold px-6 py-2 rounded-lg transition-colors w-full mt-2"
+          disabled={loading}
+        >
           {isLogin
             ? loading
               ? "Logging in..."
