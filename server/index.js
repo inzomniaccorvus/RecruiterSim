@@ -20,7 +20,7 @@ const limiter = rateLimit({
 });
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Soft auth - attaches user to req if token valid, but doesn't block unauthenticated requests.
 // Routes that require auth check req.user themselves.
