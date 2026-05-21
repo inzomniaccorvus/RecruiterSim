@@ -13,8 +13,6 @@ import rateLimit from "express-rate-limit";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-app.set("trust proxy", 1);
-
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -22,6 +20,7 @@ const limiter = rateLimit({
 });
 
 const app = express();
+app.set("trust proxy", 1);
 const port = process.env.PORT || 3000;
 
 // Soft auth - attaches user to req if token valid, but doesn't block unauthenticated requests.
