@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authFetch } from "../utils/authFetch";
 
 function Home() {
   const [resume, setResume] = useState(null);
@@ -19,10 +20,9 @@ function Home() {
     formData.append("salaryExpectation", salaryExpectation);
 
     setLoading(true);
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/submit`, {
+    const response = await authFetch(`${import.meta.env.VITE_API_URL}/submit`, {
       method: "POST",
       body: formData,
-      credentials: "include",
     });
     setLoading(false);
     if (!response.ok) {

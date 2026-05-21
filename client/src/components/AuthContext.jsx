@@ -1,24 +1,31 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { authFetch } from "../utils/authFetch";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("token"));
   const [currentEmail, setCurrentEmail] = useState("");
-
-  // Prevents components from flashing "not logged in" before the auth check resolves.
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setIsAuthLoading(false);
+        return;
+      }
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/me`, {
-          credentials: "include",
+        const response = await authFetch(`${import.meta.env.VITE_API_URL}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
           setIsLoggedIn(true);
           const parsed = await response.json();
           setCurrentEmail(parsed.email);
+        } else {
+          localStorage.removeItem("token");
+          setIsLoggedIn(false);
         }
       } catch {
         setIsLoggedIn(false);
@@ -28,6 +35,7 @@ export function AuthProvider({ children }) {
     };
     checkAuth();
   }, []);
+
   return (
     <AuthContext.Provider
       value={{

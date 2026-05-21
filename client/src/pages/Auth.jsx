@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
+import { authFetch } from "../utils/authFetch";
 
 function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,13 +20,12 @@ function Auth() {
     e.preventDefault();
     setLoading(true);
     const endpoint = isLogin ? "login" : "register";
-    const response = await fetch(
+    const response = await authFetch(
       `${import.meta.env.VITE_API_URL}/${endpoint}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-        credentials: "include",
       },
     );
     setLoading(false);
@@ -35,6 +35,8 @@ function Auth() {
       return;
     }
 
+    const data = await response.json();
+    localStorage.setItem("token", data.token);
     setIsLoggedIn(true);
     setCurrentEmail(email);
     navigate("/");

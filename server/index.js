@@ -5,7 +5,6 @@ import multer from "multer";
 import { PDFParse } from "pdf-parse";
 import prisma from "./prisma.js";
 import { GoogleGenAI } from "@google/genai";
-import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
@@ -26,15 +25,14 @@ const port = process.env.PORT || 3000;
 // Soft auth - attaches user to req if token valid, but doesn't block unauthenticated requests.
 // Routes that require auth check req.user themselves.
 const authenticate = async (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return next();
-  }
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return next();
+  const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = { userId: decoded.userId };
     next();
-  } catch (error) {
+  } catch {
     next();
   }
 };
@@ -46,7 +44,6 @@ app.use(
   }),
 );
 app.use(express.json());
-app.use(cookieParser());
 app.use(authenticate);
 
 const storage = multer.memoryStorage();
@@ -169,13 +166,7 @@ app.post("/register", async (req, res) => {
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-    res.json({ message: "Registered successfully" });
+    res.json({ message: "Registered successfully", token });
   } catch (error) {
     if (error.code === "P2002") {
       return res.status(409).json({ error: "Email already registered." });
@@ -199,13 +190,7 @@ app.post("/login", async (req, res) => {
       const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-      res.json({ message: "Logged in successfully" });
+      res.json({ message: "Registered successfully", token });
     } else {
       return res.status(401).json({ error: "Invalid credentials." });
     }
@@ -215,10 +200,7 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("token", { secure: true, sameSite: "none" });
-  res.json({
-    message: "Logged out successfully.",
-  });
+  res.json({ message: "Logged out successfully." });
 });
 
 app.get("/me", async (req, res) => {

@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
+import { authFetch } from "../utils/authFetch";
 
 function Navbar() {
   const { isLoggedIn, setIsLoggedIn, currentEmail, setCurrentEmail } =
@@ -7,14 +8,12 @@ function Navbar() {
   const location = useLocation();
 
   const logOutHandler = async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
+    await authFetch(`${import.meta.env.VITE_API_URL}/logout`, {
       method: "POST",
-      credentials: "include",
     });
-    if (response.ok) {
-      setIsLoggedIn(false);
-      setCurrentEmail("");
-    }
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setCurrentEmail("");
   };
 
   const linkClass = (path) => `

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
+import { authFetch } from "../utils/authFetch";
 
 function Result() {
   const { id } = useParams();
@@ -16,11 +17,9 @@ function Result() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
+        const response = await authFetch(
           `${import.meta.env.VITE_API_URL}/submission/${id}`,
-          {
-            credentials: "include",
-          },
+          {},
         );
         setLoading(false);
         if (!response.ok) {

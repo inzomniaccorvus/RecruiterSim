@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../components/AuthContext";
 import { Link } from "react-router-dom";
+import { authFetch } from "../utils/authFetch";
 
 function History() {
   const [results, setResults] = useState(null);
@@ -12,11 +13,10 @@ function History() {
     const fetchSubmission = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
+        const response = await authFetch(
           `${import.meta.env.VITE_API_URL}/history`,
           {
             method: "GET",
-            credentials: "include",
           },
         );
         setLoading(false);
