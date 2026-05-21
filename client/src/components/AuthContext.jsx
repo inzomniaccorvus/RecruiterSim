@@ -5,6 +5,10 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentEmail, setCurrentEmail] = useState("");
+
+  // Prevents components from flashing "not logged in" before the auth check resolves.
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -18,13 +22,21 @@ export function AuthProvider({ children }) {
         }
       } catch {
         setIsLoggedIn(false);
+      } finally {
+        setIsAuthLoading(false);
       }
     };
     checkAuth();
   }, []);
   return (
     <AuthContext.Provider
-      value={{ isLoggedIn, setIsLoggedIn, currentEmail, setCurrentEmail }}
+      value={{
+        isLoggedIn,
+        setIsLoggedIn,
+        currentEmail,
+        setCurrentEmail,
+        isAuthLoading,
+      }}
     >
       {children}
     </AuthContext.Provider>

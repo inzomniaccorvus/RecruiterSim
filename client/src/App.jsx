@@ -8,10 +8,10 @@ import Auth from "./pages/Auth";
 
 function App() {
   return (
-    <div className="bg-gray-900 min-h-screen flex flex-col text-white">
+    <div className="bg-app-bg min-h-screen flex flex-col text-white">
       <Navbar />
 
-      <main className="flex-grow max-w-2xl w-full mx-auto px-4 py-8">
+      <main className="flex-grow w-full mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/result/:id" element={<Result />} />

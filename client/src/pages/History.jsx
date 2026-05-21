@@ -5,96 +5,114 @@ import { Link } from "react-router-dom";
 function History() {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, isAuthLoading } = useAuth();
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     const fetchSubmission = async () => {
-      setLoading(true);
-      const response = await fetch("http://localhost:3000/history", {
-        method: "GET",
-        credentials: "include",
-      });
-      setLoading(false);
-      if (!response.ok) {
+      try {
+        setLoading(true);
+        const response = await fetch("http://localhost:3000/history", {
+          method: "GET",
+          credentials: "include",
+        });
+        setLoading(false);
+        if (!response.ok) {
+          setResults(null);
+          return;
+        }
+        const result = await response.json();
+        setResults(result);
+      } catch {
         setResults(null);
-        return;
+      } finally {
+        setLoading(false);
       }
-      const result = await response.json();
-      setResults(result);
     };
     fetchSubmission();
-  }, []);
+  }, [isLoggedIn]);
+
+  if (isAuthLoading)
+    return (
+      <div className="max-w-md mx-auto py-16 text-center">
+        <p className="text-gold/60 text-lg">Loading...</p>
+      </div>
+    );
 
   if (!isLoggedIn) {
     return (
-      <>
-        <h1 className="text-3xl font-bold mb-2">You're not not logged in.</h1>
-        <p className="text-gray-400 mt-8 mb-8">
-          Log in to see your submissions.
-        </p>
-        <Link
-          to="/auth"
-          className="bg-blue-700 hover:bg-blue-900 text-white font-bold px-6 py-2 rounded-lg transition-colors w-full mt-2"
-        >
-          Login
-        </Link>
-      </>
+      <div className="max-w-md mx-auto py-16 text-center">
+        <div className="bg-surface border border-surface-light/80 rounded-2xl p-8 shadow-xl shadow-black/20">
+          <h1 className="text-2xl font-bold text-white mb-2">
+            You are not logged in.
+          </h1>
+          <p className="text-zinc-400 text-sm mb-6">
+            Log in to see your submissions.
+          </p>
+          <Link
+            to="/auth"
+            className="inline-block w-full bg-gold hover:bg-gold/90 text-app-bg font-bold py-2.5 px-4 rounded-xl transition-all duration-200"
+          >
+            Login
+          </Link>
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-2">My Submissions</h1>
+    <div className="max-w-4xl mx-auto py-12 px-4">
+      <h1 className="text-3xl font-bold text-white mb-6">My Submissions</h1>
+
       {loading ? (
-        <p className="text-gray-400 mt-8">Fetching your submissions...</p>
-      ) : (
-        results && (
-          <table className="w-full mt-8 border-collapse">
+        <h2 className="text-zinc-500 text-lg">Loading...</h2>
+      ) : results && results.length > 0 ? (
+        <div className="overflow-x-auto border border-surface-light/80 rounded-xl bg-surface/40 shadow-xl">
+          <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr>
-                <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700">
-                  Role
+              <tr className="border-b border-surface-light bg-surface/80">
+                <th className="py-3 px-4 font-semibold text-zinc-400">
+                  Job Title
                 </th>
-                <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700">
-                  Salary Expectaion
+                <th className="py-3 px-4 font-semibold text-zinc-400">
+                  Salary Expectation
                 </th>
-                <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700">
-                  Date
-                </th>
-                <th className="text-left text-gray-400 text-sm pb-3 px-2 border-b border-gray-700">
-                  {
-                    //For symmtery, view button;
-                  }
-                </th>
+                <th className="py-3 px-4 font-semibold text-zinc-400">Date</th>
+                <th className="py-3 px-4 font-semibold text-zinc-400"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-surface-light/50">
               {results.map((submission) => (
-                <tr key={submission.id} className="hover:bg-gray-700">
-                  <td className="py-3 px-2 border-b border-gray-800 text-gray-300">
+                <tr
+                  key={submission.id}
+                  className="hover:bg-surface-light/30 transition-colors"
+                >
+                  <td className="py-3 px-4 text-zinc-200">
                     {submission.jobTitle}
                   </td>
-                  <td className="py-3 px-2 border-b border-gray-800 text-gray-300">
+                  <td className="py-3 px-4 text-zinc-400">
                     {submission.salaryExpectation}
                   </td>
-                  <td className="py-3 px-2 border-b border-gray-800 text-gray-300">
+                  <td className="py-3 px-4 text-zinc-400">
                     {new Date(submission.date).toLocaleDateString()}
                   </td>
-                  <td className="py-3 px-2 border-b border-gray-800 text-gray-300">
-                    <a
-                      className="text-blue-400 hover:underline"
-                      href={`/result/${submission.id}`}
+                  <td className="py-3 px-4 text-right">
+                    <Link
+                      className="text-gold hover:underline font-medium"
+                      to={`/result/${submission.id}`}
                     >
                       View
-                    </a>
+                    </Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )
+        </div>
+      ) : (
+        <p className="text-zinc-500">No submissions found.</p>
       )}
-    </>
+    </div>
   );
 }
 

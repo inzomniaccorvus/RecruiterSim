@@ -7,9 +7,11 @@ function Home() {
   const [salaryExpectation, setSalaryExpectation] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!resume) return alert("Please upload your resume first!");
 
     let formData = new FormData();
     formData.append("resume", resume);
@@ -17,93 +19,108 @@ function Home() {
     formData.append("salaryExpectation", salaryExpectation);
 
     setLoading(true);
-    const respone = await fetch("http://localhost:3000/submit", {
+    const response = await fetch("http://localhost:3000/submit", {
       method: "POST",
       body: formData,
       credentials: "include",
     });
     setLoading(false);
-    const data = await respone.json();
-    navigate(`/result/${data.id}`);
+    if (!response.ok) {
+      const err = await response.json();
+      setError(err.error || "Something went wrong. Please try again.");
+      return;
+    }
+    const data = await response.json();
+    if (data.id) {
+      navigate(`/result/${data.id}`);
+    } else {
+      navigate("/result/anonymous", { state: { data } });
+    }
   };
 
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-2">Recruiter Simulator</h1>
-      <h2 className="text-lg text-gray-400 mb-4">
-        Get honest and constructive feedback with a touch of humor
-      </h2>
-      <p className="text-gray-400 text-sm mb-6 ">
-        Usage: Upload your resume, drop in the role and salary you're gunning
-        for, and let our AI recruiter tell you exactly where you stand.
-      </p>
-      <form onSubmit={(e) => handleSubmit(e)} className="flex flex-col gap-4">
+    <div className="max-w-xl mx-auto py-12 px-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          Recruiter Simulator
+        </h1>
+        <h2 className="text-lg text-zinc-400 mb-4">
+          Get honest and constructive feedback with a touch of humor
+        </h2>
+        <p className="text-zinc-400 text-sm leading-relaxed">
+          Usage: Upload your resume, drop in the role and salary you're gunning
+          for, and let our AI recruiter tell you exactly where you stand.
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className="bg-surface border border-surface-light/80 rounded-2xl p-6 sm:p-8 space-y-5 shadow-xl shadow-black/20"
+      >
         <div className="flex flex-col gap-1">
-          <label htmlFor="resume" className="text-sm text-gray-400 font-medium">
-            Resume — PDF only{" "}
+          <label className="text-sm text-zinc-400 font-medium">
+            Resume (PDF only)
           </label>
           <input
             type="file"
             id="resume"
+            accept=".pdf"
             className="hidden"
             onChange={(e) => setResume(e.target.files[0])}
           />
           <label
             htmlFor="resume"
-            className="cursor-pointer bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-gray-400 w-full block hover:border-blue-500"
+            className="flex flex-col items-center justify-center border-2 border-dashed border-surface-light hover:border-gold/60 bg-app-bg/40 rounded-xl p-5 text-center cursor-pointer transition-all duration-200"
           >
-            {resume ? resume.name : "Click to upload resume (PDF)"}
+            <span className="text-sm text-zinc-300">
+              {resume ? `📄 ${resume.name}` : "Click to select resume file"}
+            </span>
           </label>
         </div>
 
         <div className="flex flex-col gap-1">
           <label
             htmlFor="jobTitle"
-            className="text-sm text-gray-400 font-medium"
+            className="text-sm text-zinc-400 font-medium"
           >
             Target Role
           </label>
           <input
             type="text"
-            name="jobTittle"
-            id="1"
-            className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white w-full focus:outline-none focus:border-blue-500"
-            onChange={(e) => {
-              setJobTitle(e.target.value);
-            }}
+            id="jobTitle"
+            maxLength={100}
+            className="w-full bg-app-bg/80 border border-surface-light rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold transition-all duration-200"
+            onChange={(e) => setJobTitle(e.target.value)}
+            required
           />
         </div>
 
         <div className="flex flex-col gap-1">
           <label
             htmlFor="salaryExpectation"
-            className="text-sm text-gray-400 font-medium"
+            className="text-sm text-zinc-400 font-medium"
           >
             Expected Salary (USD/year)
           </label>
           <input
-            type="text"
-            name="salaryExpectation"
-            id="2"
-            className="bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white w-full focus:outline-none focus:border-blue-500"
+            type="number"
+            id="salaryExpectation"
+            className="w-full bg-app-bg/80 border border-surface-light rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-gold transition-all duration-200"
             onChange={(e) => setSalaryExpectation(e.target.value)}
+            required
           />
         </div>
+
         <button
           type="submit"
-          className="bg-blue-700 hover:bg-blue-900 text-white font-bold px-6 py-2 rounded-lg transition-colors w-full mt-2"
+          className="w-full bg-gold hover:bg-gold/90 text-app-bg font-bold py-3 px-6 rounded-xl transition-all duration-200 disabled:bg-surface-light disabled:text-zinc-500 mt-2"
           disabled={loading}
         >
           {loading ? "Roasting..." : "Roast Me"}
         </button>
+        {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
       </form>
-      <p>
-        <small>
-          Your submissions are saved if logged in - look them up anytime under
-          History
-        </small>
-      </p>
-    </>
+    </div>
   );
 }
 

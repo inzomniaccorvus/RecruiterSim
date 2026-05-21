@@ -8,13 +8,22 @@ import { GoogleGenAI } from "@google/genai";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "Too many requests, slow down." },
+});
+
 const app = express();
 const port = 3000;
 
+// Soft auth - attaches user to req if token valid, but doesn't block unauthenticated requests.
+// Routes that require auth check req.user themselves.
 const authenticate = async (req, res, next) => {
   const token = req.cookies.token;
   if (!token) {
@@ -40,52 +49,82 @@ app.use(cookieParser());
 app.use(authenticate);
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-app.post("/submit", upload.single("resume"), async (req, res) => {
-  try {
-    const parser = new PDFParse({ data: req.file.buffer });
-    const result = await parser.getText();
-    await parser.destroy();
-    const resumeText = result.text;
-    const jobTitle = req.body.jobTitle;
-    const salaryExpectation = req.body.salaryExpectation;
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `Pretend you're a recruiter for a certain company, someone's applying for ${jobTitle} position, expects a salaryExpectation of ${salaryExpectation} USD yearly and their details are ${resumeText} in resume form. Give summary of their submission and then constructive feedback. Respond in pure JSON only, no markdown, no backticks, with exactly these keys: {"summary": "...", "feedback": "..."}. Do not use markdown formatting in your response text. Use witty humor and don't forget to roast or praise them when necessary.`,
+app.post(
+  "/submit",
+  limiter,
+  (req, res, next) => {
+    upload.single("resume")(req, res, (err) => {
+      if (err?.code === "LIMIT_FILE_SIZE")
+        return res.status(400).json({ error: "File too large. Max 5MB." });
+      if (err) return res.status(400).json({ error: "Upload failed." });
+      next();
     });
-    const responseText = response.text;
-    const { summary, feedback } = JSON.parse(responseText);
-    if (req.user) {
-      const user = await prisma.user.findUnique({
-        where: { id: req.user.userId },
+  },
+  async (req, res) => {
+    try {
+      if (!req.file)
+        return res.status(400).json({ error: "No file uploaded." });
+
+      if (req.file.mimetype !== "application/pdf")
+        return res.status(400).json({ error: "PDF files only." });
+
+      const parser = new PDFParse({ data: req.file.buffer });
+      const result = await parser.getText();
+      await parser.destroy();
+      const resumeText = result.text;
+      const jobTitle = req.body.jobTitle?.trim();
+      const salaryExpectation = Number(req.body.salaryExpectation);
+
+      if (!jobTitle || jobTitle.length > 100)
+        return res.status(400).json({ error: "Invalid job title." });
+
+      if (isNaN(salaryExpectation) || salaryExpectation <= 0)
+        return res.status(400).json({ error: "Invalid salary." });
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: `Pretend you're a recruiter for a certain company, someone's applying for ${jobTitle} position, expects a salary of ${salaryExpectation} USD yearly and their details are ${resumeText} in resume form. Give summary of their submission and then constructive feedback. Respond in pure JSON only, no markdown, no backticks, with exactly these keys: {"summary": "...", "feedback": "..."}. Do not use markdown formatting in your response text. Use witty humor and don't forget to roast or praise them when necessary but keep your response concise and punchy.`,
       });
-      const submission = await prisma.submission.create({
-        data: {
+      const responseText = response.text;
+      let summary, feedback;
+      try {
+        ({ summary, feedback } = JSON.parse(responseText));
+      } catch {
+        return res.status(500).json({
+          error: "AI returned an unexpected response. Please try again.",
+        });
+      }
+      if (req.user) {
+        const submission = await prisma.submission.create({
+          data: {
+            summary,
+            feedback,
+            jobTitle,
+            salaryExpectation,
+            userID: req.user.userId,
+          },
+          include: { user: true },
+        });
+        res.json({ ...submission, email: submission.user.email });
+      } else {
+        res.json({
           summary,
           feedback,
           jobTitle,
           salaryExpectation,
-          userID: user.id,
-        },
-      });
-      res.json({ ...submission, email: user.email });
-    } else {
-      res.json({
-        summary,
-        feedback,
-        jobTitle,
-        salaryExpectation,
-      });
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({ error: "Something went wrong." });
     }
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ error: "Something went wrong." });
-  }
-});
+  },
+);
 
 app.get("/submission/:id", async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "Unauthorized." });
     const id = req.params.id;
     const submission = await prisma.submission.findUnique({
       where: { id },
@@ -110,7 +149,6 @@ app.get("/history", async (req, res) => {
     });
     res.json(submissions);
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ error: "Something went wrong." });
   }
 });
@@ -136,7 +174,6 @@ app.post("/register", async (req, res) => {
     if (error.code === "P2002") {
       return res.status(409).json({ error: "Email already registered." });
     }
-    console.log(error);
     return res.status(500).json({ error: "Something went wrong." });
   }
 });
@@ -148,7 +185,7 @@ app.post("/login", async (req, res) => {
       where: { email },
     });
     if (user === null) {
-      return res.status(404).json({ error: "entry missing." });
+      return res.status(401).json({ error: "Invalid credentials." });
     }
     const hash = user.password;
     const match = await bcrypt.compare(password, hash);
@@ -163,8 +200,7 @@ app.post("/login", async (req, res) => {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       res.json({ message: "Logged in successfully" });
-    }
-    if (!match) {
+    } else {
       return res.status(401).json({ error: "Invalid credentials." });
     }
   } catch (error) {
@@ -180,9 +216,17 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/me", async (req, res) => {
-  if (!req.user) return res.status(401).json({ error: "Unauthorized." });
-  const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
-  res.json({ userId: user.id, email: user.email });
+  try {
+    if (!req.user)
+      return res.status(401).json({ error: "Invalid credentials." });
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+    });
+    if (!user) return res.status(404).json({ error: "User not found." });
+    res.json({ userId: user.id, email: user.email });
+  } catch (error) {
+    return res.status(500).json({ error: "Something went wrong." });
+  }
 });
 
 app.listen(3000, () => {

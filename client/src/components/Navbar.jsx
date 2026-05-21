@@ -1,9 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
 function Navbar() {
   const { isLoggedIn, setIsLoggedIn, currentEmail, setCurrentEmail } =
     useAuth();
+  const location = useLocation();
+
   const logOutHandler = async () => {
     const response = await fetch("http://localhost:3000/logout", {
       method: "POST",
@@ -14,26 +16,38 @@ function Navbar() {
       setCurrentEmail("");
     }
   };
+
+  const linkClass = (path) => `
+    px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200
+    ${
+      location.pathname === path
+        ? "bg-surface-light text-gold shadow-sm shadow-black/20"
+        : "text-zinc-400 hover:text-white hover:bg-surface-light/40"
+    }
+  `;
+
   return (
-    <nav className="bg-gray-800 flex justify-between px-2 py-4">
-      <span className="font-bold text-xl px-2">Recruiter Sim</span>
-      <div className="flex gap-2">
-        <span className="text-gray-400 text-base mr-8">{currentEmail}</span>
-        <Link
-          to="/"
-          className="bg-slate-900 hover:bg-indigo-950 rounded-lg px-2 py-2"
-        >
+    <nav className="sticky top-0 z-50 backdrop-blur-md bg-surface/90 border-b border-surface-light/60 px-6 py-4 flex justify-between items-center shadow-lg shadow-black/10">
+      <div className="flex items-center">
+        <span className="font-bold text-xl text-white">Recruiter Sim</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {currentEmail && (
+          <span className="hidden sm:inline text-zinc-500 text-sm mr-4">
+            {currentEmail}
+          </span>
+        )}
+        <Link to="/" className={linkClass("/")}>
           Home
         </Link>
-        <Link
-          to="/history"
-          className="bg-slate-900 hover:bg-indigo-950 rounded-lg px-2 py-2"
-        >
+        <Link to="/history" className={linkClass("/history")}>
           History
         </Link>
+
         {isLoggedIn ? (
           <button
-            className="bg-slate-900 hover:bg-indigo-950 rounded-lg px-2 py-2"
+            className="ml-2 px-3 py-2 rounded-xl text-sm font-medium text-zinc-300 bg-app-bg/60 border border-surface-light hover:bg-surface-light hover:text-white transition-all duration-200"
             onClick={logOutHandler}
           >
             Logout
@@ -41,7 +55,7 @@ function Navbar() {
         ) : (
           <Link
             to="/auth"
-            className="bg-slate-900 hover:bg-indigo-950 rounded-lg px-2 py-2"
+            className="ml-2 px-3 py-2 rounded-xl text-sm font-bold bg-gold text-app-bg hover:bg-gold/90 transition-all duration-200"
           >
             Login
           </Link>
@@ -50,4 +64,5 @@ function Navbar() {
     </nav>
   );
 }
+
 export default Navbar;
