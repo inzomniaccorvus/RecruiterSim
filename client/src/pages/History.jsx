@@ -12,10 +12,13 @@ function History() {
     const fetchSubmission = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:3000/history", {
-          method: "GET",
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/history`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
         setLoading(false);
         if (!response.ok) {
           setResults(null);

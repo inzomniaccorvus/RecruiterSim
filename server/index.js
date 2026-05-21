@@ -40,7 +40,7 @@ const authenticate = async (req, res, next) => {
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   }),
 );
@@ -75,12 +75,16 @@ app.post(
       await parser.destroy();
       const resumeText = result.text;
       const jobTitle = req.body.jobTitle?.trim();
-      const salaryExpectation = Number(req.body.salaryExpectation);
+      const salaryExpectation = req.body.salaryExpectation;
 
       if (!jobTitle || jobTitle.length > 100)
         return res.status(400).json({ error: "Invalid job title." });
 
-      if (isNaN(salaryExpectation) || salaryExpectation <= 0)
+      if (
+        !salaryExpectation ||
+        isNaN(Number(salaryExpectation)) ||
+        Number(salaryExpectation) <= 0
+      )
         return res.status(400).json({ error: "Invalid salary." });
 
       const response = await ai.models.generateContent({
@@ -117,6 +121,7 @@ app.post(
         });
       }
     } catch (error) {
+      console.log(error);
       return res.status(500).json({ error: "Something went wrong." });
     }
   },
@@ -165,7 +170,7 @@ app.post("/register", async (req, res) => {
     });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false, // set true when https is available ig
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -195,7 +200,7 @@ app.post("/login", async (req, res) => {
       });
       res.cookie("token", token, {
         httpOnly: true,
-        secure: false, // set true when https is available ig
+        secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });

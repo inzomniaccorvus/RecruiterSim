@@ -19,12 +19,15 @@ function Auth() {
     e.preventDefault();
     setLoading(true);
     const endpoint = isLogin ? "login" : "register";
-    const response = await fetch(`http://localhost:3000/${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/${endpoint}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      },
+    );
     setLoading(false);
     if (!response.ok) {
       const err = await response.json();

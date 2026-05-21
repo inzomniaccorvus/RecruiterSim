@@ -16,9 +16,12 @@ function Result() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:3000/submission/${id}`, {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/submission/${id}`,
+          {
+            credentials: "include",
+          },
+        );
         setLoading(false);
         if (!response.ok) {
           setError("Submission not found.");
