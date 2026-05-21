@@ -13,6 +13,8 @@ import rateLimit from "express-rate-limit";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
+app.set("trust proxy", 1);
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -171,7 +173,7 @@ app.post("/register", async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
     res.json({ message: "Registered successfully" });
@@ -201,7 +203,7 @@ app.post("/login", async (req, res) => {
       res.cookie("token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "none",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       res.json({ message: "Logged in successfully" });
@@ -214,7 +216,7 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("token", { secure: true, sameSite: "none" });
   res.json({
     message: "Logged out successfully.",
   });
