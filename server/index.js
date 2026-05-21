@@ -119,7 +119,11 @@ app.post(
         });
       }
     } catch (error) {
-      console.log(error);
+      if (error.status === 503) {
+        return res.status(503).json({
+          error: "The AI is currently busy. Please try again in a moment.",
+        });
+      }
       return res.status(500).json({ error: "Something went wrong." });
     }
   },
